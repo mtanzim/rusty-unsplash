@@ -13,39 +13,54 @@ impl<'a> Unsplash<'a> {
             base_api,
         }
     }
-    pub fn collect_urls(
-        &self,
-        collection_ids: &[&str],
-        pages: u32,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let urls: Vec<String> = collection_ids
-            .iter()
-            .flat_map(|collection_id| {
-                let urls_per_page: Vec<String> = (1..=pages)
-                    .flat_map(|page| {
-                        let api_url = format!(
-                            "{}/collections/{}/photos/?client_id={}&page={}",
-                            self.base_api, collection_id, self.access_key, page
-                        );
-                        let resp = reqwest::blocking::get(api_url)
-                            .expect("failed to get response")
-                            .text()
-                            .expect("failed to parse response to text");
-                        let deserialized: UnsplashResponse = serde_json::from_str(&resp)
-                            .expect("failed to deserialize resonse to JSON");
 
-                        let urls_per_collection: Vec<String> = deserialized
-                            .iter()
-                            .map(|item| item.urls.full.to_string())
-                            .collect();
-                        urls_per_collection
-                    })
-                    .collect();
-                urls_per_page
-            })
+    fn extract_image_url(&self, api_url: &str) -> Option<Vec<Option<String>>> {
+        let resp = reqwest::blocking::get(api_url);
+        let resp = match resp {
+            Ok(v) => v,
+            Err(_) => return None,
+        };
+        let resp = match resp.text() {
+            Ok(v) => v,
+            Err(_) => return None,
+        };
+        let deserialized: Result<UnsplashResponse, serde_json::Error> = serde_json::from_str(&resp);
+        let deserialized = match deserialized {
+            Ok(v) => v,
+            Err(_) => return None,
+        };
+        let image_urls = deserialized
+            .iter()
+            .map(|item| Some(item.urls.full.to_string()))
             .collect();
-        println!("{:?}", urls);
-        Ok(())
+
+        Some(image_urls)
+    }
+
+    // TODO: figure out the advanced way of doing this without all of the pattern matches!
+    pub fn collect_urls(&self, collection_ids: &[&str], pages: u32) -> Vec<String> {
+        let mut urls: Vec<String> = Vec::new();
+        for collection_id in collection_ids {
+            for page in 1..=pages {
+                let api_url = format!(
+                    "{}/collections/{}/photos/?client_id={}&page={}",
+                    self.base_api, collection_id, self.access_key, page
+                );
+                let image_urls = self.extract_image_url(api_url.as_str());
+                let image_urls = match image_urls {
+                    Some(urls) => urls,
+                    None => continue,
+                };
+                for url in image_urls {
+                    let url = match url {
+                        Some(url) => url,
+                        None => continue,
+                    };
+                    urls.push(url)
+                }
+            }
+        }
+        urls
     }
 }
 

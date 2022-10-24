@@ -1,8 +1,8 @@
+use dotenv::dotenv;
 use std::{
     env,
     io::{self},
 };
-use dotenv::dotenv;
 
 use rusty_unsplash::Unsplash;
 
@@ -34,8 +34,7 @@ fn main() {
             return;
         }
     };
-    match us.collect_urls(&collection_ids, num_pages) {
-        Ok(_) => println!("Completed"),
-        Err(error) => println!("{:?}", error),
-    }
+    let urls = us.collect_urls(&collection_ids, num_pages);
+    println!("{:?}", urls);
+    println!("Found {} images", urls.len())
 }
