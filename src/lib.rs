@@ -41,7 +41,7 @@ impl<'a> Unsplash<'a> {
     pub fn collect_urls(&self, collection_ids: &[&str], pages: u32) -> Vec<String> {
         let mut urls: Vec<String> = Vec::new();
         for collection_id in collection_ids {
-            for page in 1..=pages {
+            for page in 0..pages {
                 let api_url = format!(
                     "{}/collections/{}/photos/?client_id={}&page={}",
                     self.base_api, collection_id, self.access_key, page
