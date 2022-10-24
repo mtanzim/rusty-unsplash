@@ -15,26 +15,14 @@ impl<'a> Unsplash<'a> {
     }
 
     fn extract_image_url(&self, api_url: &str) -> Option<Vec<String>> {
-        let resp = reqwest::blocking::get(api_url);
-        let resp = match resp {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-        let resp = match resp.text() {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-        let deserialized: Result<UnsplashResponse, serde_json::Error> = serde_json::from_str(&resp);
-        let deserialized = match deserialized {
-            Ok(v) => v,
-            Err(_) => return None,
-        };
-        let image_urls = deserialized
-            .iter()
-            .map(|item| item.urls.full.to_string())
-            .collect();
-
-        Some(image_urls)
+        let resp = reqwest::blocking::get(api_url).ok()?.text().ok()?;
+        let deserialized: UnsplashResponse = serde_json::from_str(&resp).ok()?;
+        Some(
+            deserialized
+                .iter()
+                .map(|item| item.urls.full.to_string())
+                .collect(),
+        )
     }
 
     // TODO: figure out the advanced way of doing this without all of the pattern matches!
