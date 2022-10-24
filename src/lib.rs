@@ -47,13 +47,11 @@ impl<'a> Unsplash<'a> {
                     self.base_api, collection_id, self.access_key, page
                 );
                 let image_urls = self.extract_image_url(api_url.as_str());
-                let image_urls = match image_urls {
+                let mut image_urls = match image_urls {
                     Some(urls) => urls,
                     None => continue,
                 };
-                for url in image_urls {
-                    urls.push(url);
-                }
+                urls.append(&mut image_urls);
             }
         }
         urls
