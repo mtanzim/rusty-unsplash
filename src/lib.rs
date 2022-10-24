@@ -14,7 +14,7 @@ impl<'a> Unsplash<'a> {
         }
     }
 
-    fn extract_image_url(&self, api_url: &str) -> Option<Vec<Option<String>>> {
+    fn extract_image_url(&self, api_url: &str) -> Option<Vec<String>> {
         let resp = reqwest::blocking::get(api_url);
         let resp = match resp {
             Ok(v) => v,
@@ -31,7 +31,7 @@ impl<'a> Unsplash<'a> {
         };
         let image_urls = deserialized
             .iter()
-            .map(|item| Some(item.urls.full.to_string()))
+            .map(|item| item.urls.full.to_string())
             .collect();
 
         Some(image_urls)
@@ -52,11 +52,7 @@ impl<'a> Unsplash<'a> {
                     None => continue,
                 };
                 for url in image_urls {
-                    let url = match url {
-                        Some(url) => url,
-                        None => continue,
-                    };
-                    urls.push(url)
+                    urls.push(url);
                 }
             }
         }
