@@ -1,12 +1,7 @@
 use dotenv::dotenv;
-use std::{
-    env,
-    fs::File,
-    io::{self, Write},
-    path::Path,
-};
+use std::{env, io};
 
-use rusty_unsplash::Unsplash;
+use rusty_unsplash::{Downloader, Unsplash};
 
 fn main() {
     dotenv().ok();
@@ -55,32 +50,11 @@ fn main() {
         }
     };
 
-    let urls_to_download = urls.iter().take(num_downloads);
-    for (i, url) in urls_to_download.enumerate() {
-        println!("{}) {}\n", i + 1, url);
-        let text = us.download_file(url);
-        match text {
-            Some(t) => {
-                let filename = format!("downloads/{i}.png");
-                let path = Path::new(&filename);
-                let display = path.display();
-
-                let mut file = match File::create(&path) {
-                    Err(why) => {
-                        println!("couldn't create file {}: {}", display, why);
-                        continue;
-                    }
-                    Ok(file) => file,
-                };
-                match file.write_all(t.as_bytes()) {
-                    Err(why) => {
-                        println!("couldn't write to file {}: {}", display, why);
-                        continue;
-                    }
-                    Ok(_) => println!("Downloaded image to {}", display),
-                }
-            }
-            _ => println!("No data downloaded"),
-        }
-    }
+    let urls_to_download = urls
+        .iter()
+        .take(num_downloads)
+        .map(|s| s.as_str())
+        .collect();
+    let downloader = Downloader::new("downloads", urls_to_download);
+    downloader.download_all();
 }

@@ -1,4 +1,58 @@
+use std::{
+    fs::File,
+    io::{self, Cursor},
+    path::Path,
+};
+
 use serde::{Deserialize, Serialize};
+
+pub struct Downloader<'a> {
+    path_prefix: &'a str,
+    urls: Vec<&'a str>,
+}
+
+impl<'a> Downloader<'a> {
+    pub fn new(path_prefix: &'a str, urls: Vec<&'a str>) -> Downloader<'a> {
+        Downloader { path_prefix, urls }
+    }
+
+    fn download(&self, url: &str, i: usize) {
+        let dl_bytes = reqwest::blocking::get(url)
+            .ok()
+            .and_then(|r| r.bytes().ok());
+        match dl_bytes {
+            Some(bytes) => {
+                let filename = format!("{}/{i}.png", self.path_prefix);
+                let path = Path::new(&filename);
+                let display = path.display();
+
+                let mut file = match File::create(&path) {
+                    Err(why) => {
+                        println!("couldn't create file {}: {}", display, why);
+                        return;
+                    }
+                    Ok(file) => file,
+                };
+
+                let mut content = Cursor::new(bytes);
+                match io::copy(&mut content, &mut file) {
+                    Err(why) => {
+                        println!("couldn't write to file {}: {}", display, why);
+                        return;
+                    }
+                    Ok(_) => println!("Downloaded image {} to {}", url, display),
+                }
+            }
+            _ => println!("No data downloaded"),
+        }
+    }
+
+    pub fn download_all(&self) {
+        for (i, url) in self.urls.iter().enumerate() {
+            self.download(url, i)
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Unsplash<'a> {
@@ -23,10 +77,6 @@ impl<'a> Unsplash<'a> {
                 .map(|item| item.urls.full.to_string())
                 .collect(),
         )
-    }
-
-    pub fn download_file(&self, target: &str) -> Option<String> {
-        return reqwest::blocking::get(target).ok()?.text().ok();
     }
 
     pub fn collect_urls(&self, collection_ids: &[&str], pages: usize) -> Vec<String> {
