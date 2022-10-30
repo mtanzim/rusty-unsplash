@@ -61,7 +61,7 @@ fn main() {
         let text = us.download_file(url);
         match text {
             Some(t) => {
-                let filename = format!("{i}.png");
+                let filename = format!("downloads/{i}.png");
                 let path = Path::new(&filename);
                 let display = path.display();
 
