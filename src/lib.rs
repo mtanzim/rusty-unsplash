@@ -1,3 +1,5 @@
+use std::str::Bytes;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
@@ -25,8 +27,11 @@ impl<'a> Unsplash<'a> {
         )
     }
 
-    // TODO: figure out the advanced way of doing this without all of the pattern matches!
-    pub fn collect_urls(&self, collection_ids: &[&str], pages: u32) -> Vec<String> {
+    pub fn download_file(&self, target: &str) -> Option<String> {
+        return reqwest::blocking::get(target).ok()?.text().ok();
+    }
+
+    pub fn collect_urls(&self, collection_ids: &[&str], pages: usize) -> Vec<String> {
         let mut urls: Vec<String> = Vec::new();
         for collection_id in collection_ids {
             for page in 0..pages {

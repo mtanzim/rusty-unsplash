@@ -27,7 +27,7 @@ fn main() {
     io::stdin()
         .read_line(&mut num_pages)
         .expect("Failed to read line for number of pages");
-    let num_pages: u32 = match num_pages.trim().parse() {
+    let num_pages: usize = match num_pages.trim().parse() {
         Ok(v) if v >= 1 && v <= 5 => v,
         _ => {
             println!("Invalid number of pages!");
@@ -35,6 +35,31 @@ fn main() {
         }
     };
     let urls = us.collect_urls(&collection_ids, num_pages);
-    println!("{:?}", urls);
-    println!("Found {} images", urls.len())
+    let num_images = urls.len();
+    println!("Found {} images", num_images);
+
+    println!("How many would you like to download?");
+
+    let mut num_downloads = String::new();
+    io::stdin()
+        .read_line(&mut num_downloads)
+        .expect("Failed to read line for number of downloads");
+
+    let num_downloads: usize = match num_downloads.trim().parse() {
+        Ok(v) if v >= 1 && v <= num_images => v,
+        _ => {
+            println!("Invalid number of downloads!");
+            return;
+        }
+    };
+
+    let urls_to_download = urls.iter().take(num_downloads);
+    for (i, url) in urls_to_download.enumerate() {
+        println!("{}) {}\n", i + 1, url);
+        let text = us.download_file(url);
+        match text {
+            Some(t) => println!("{:?}", t),
+            _ => println!("No data found"),
+        }
+    }
 }
