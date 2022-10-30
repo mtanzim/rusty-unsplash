@@ -1,7 +1,9 @@
 use dotenv::dotenv;
 use std::{
     env,
-    io::{self},
+    fs::File,
+    io::{self, Write},
+    path::Path,
 };
 
 use rusty_unsplash::Unsplash;
@@ -58,8 +60,27 @@ fn main() {
         println!("{}) {}\n", i + 1, url);
         let text = us.download_file(url);
         match text {
-            Some(t) => println!("{:?}", t),
-            _ => println!("No data found"),
+            Some(t) => {
+                let filename = format!("{i}.png");
+                let path = Path::new(&filename);
+                let display = path.display();
+
+                let mut file = match File::create(&path) {
+                    Err(why) => {
+                        println!("couldn't create file {}: {}", display, why);
+                        continue;
+                    }
+                    Ok(file) => file,
+                };
+                match file.write_all(t.as_bytes()) {
+                    Err(why) => {
+                        println!("couldn't write to file {}: {}", display, why);
+                        continue;
+                    }
+                    Ok(_) => println!("Downloaded image to {}", display),
+                }
+            }
+            _ => println!("No data downloaded"),
         }
     }
 }
